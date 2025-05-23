@@ -61,33 +61,44 @@ CommandRouter.get("/restart", (req, res): any => {
   });
 });
 
-CommandRouter.post("/upload", fileup(), (req, res): any => {
-  if (!req.files || Object.keys(req.files).length === 0) {
-    return res.status(400).send("No se ha subido ningún archivo");
+CommandRouter.post("/upload", fileup(), async (req, res): Promise<any> => {
+if (!req.files || Object.keys(req.files).length === 0) {
+    return res.status(400).json({ msg: "No se ha subido ningún archivo" });
   }
+
   let files: UploadedFile[] | UploadedFile = req.files.file;
-  if (files instanceof Array) {
-    files.map((file) => {
-      file.mv(
-        path.join("C:/Users/Administrator/Desktop/mineserver/server.jar/mods/", file.name),
-        (err: any) => {
-          if (err) {
-            return console.log(err)
-          }
-          console.log("Archivo subido correctamente")
-        }
+  const uploadDir = "C:/Users/Administrator/Desktop/mineserver/mods";
+
+  try {
+    if (Array.isArray(files)) {
+      // Procesar múltiples archivos
+      const results = await Promise.all(
+        files.map(file => new Promise((resolve, reject) => {
+          const savePath = path.join(uploadDir, file.name);
+          file.mv(savePath, err => {
+            if (err) {
+              console.error("Error al mover archivo:", err);
+              return reject(err);
+            }
+            resolve("ok");
+          });
+        }))
       );
-    });
-  } else {
-    files.mv(
-      path.join("C:/Users/Administrator/Desktop/mineserver/server.jar/mods/", files.name),
-      (err: any) => {
+      return res.json({ msg: "Todos los archivos se subieron correctamente", results });
+    } else {
+      // Procesar un solo archivo
+      const savePath = path.join(uploadDir, files.name);
+      files.mv(savePath, (err: any) => {
         if (err) {
-          console.log(err)
+          console.error("Error al mover archivo:", err);
+          return res.status(500).json({ msg: "Error al subir el archivo" });
         }
-        res.send("Archivo subido correctamente");
-      }
-    );
+        return res.json({ msg: "Archivo subido correctamente" });
+      });
+    }
+  } catch (error) {
+    console.error("Error durante la carga de archivos:", error);
+    return res.status(500).json({ msg: "Ocurrió un error al subir los archivos" });
   }
 });
 
