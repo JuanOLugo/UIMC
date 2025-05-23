@@ -6,13 +6,13 @@ const CommandRouter = Router();
 
 let processMain: null | ChildProcessWithoutNullStreams = null;
 
-const dirExe = path.join("C:/Users/Administrator/Desktop/UIMC-master/server/Public/server.bat");
-console.log(dirExe)
-const runBat = (dirExe: string) => {
-  return spawn("cmd.exe", ['/c', 'start', dirExe], {
-    shell: true,
-    detached:true,
-    cwd: path.dirname("C:/Users/Administrator/Desktop/UIMC-master/server/Public/server.jar"),
+
+
+const runBat = () => {
+  return spawn("java", ['-Xms1G', '-Xmx2G', "-jar", path.join("C:/Users/Administrator/Desktop/mineserver/server.jar"), "nogui" ], {
+    shell: false,
+    detached:false,
+    cwd: path.dirname("C:/Users/Administrator/Desktop/mineserver/server.jar"),
   
   });
 };
@@ -23,41 +23,33 @@ CommandRouter.get("/goonline", (req, res): any => {
   }
 
   try {
-    processMain = runBat(dirExe);
+    processMain = runBat();
     res.send({ msg: "✅ Servidor iniciado", msgdata: processMain });
   } catch (error) {
     res.send({ msg: "Error al iniciar el servidor" });
   }
 });
 
-CommandRouter.get("/stop", (req, res) => {
+CommandRouter.get("/stop", (req, res): any => {
   if (processMain === null) {
-    res.send({ msg: "El servidor no esta en linea" });
-    return;
+    return res.send({ msg: "El servidor no está en línea" });
   }
-
-  processMain.kill("SIGINT");
-  processMain = null;
-  res.send({ msg: "✅ Servidor detenido" });
+  
+  processMain.stdin.write("stop\n");
+  processMain = null
+  res.send({ msg: "✅ Servidor detenido (esperando cierre)" });
 });
 
-CommandRouter.get("/restart", (req, res) => {
-  if (processMain === null) {
-    res.send({ msg: "El servidor no esta en linea" });
-    return;
+CommandRouter.get("/restart", (req, res): any => {
+   if (processMain === null) {
+    return res.send({ msg: "El servidor no está en línea" });
   }
 
-  processMain.kill("SIGINT");
-  processMain = null;
-
-  setTimeout(() => {}, 1000);
-
-  try {
-    processMain = runBat(dirExe);
+  processMain.stdin.write("stop\n");
+  processMain.once("exit", () => {
+    processMain = runBat();
     res.send({ msg: "✅ Servidor reiniciado" });
-  } catch (error) {
-    res.send({ msg: "Error al reiniciar el servidor" });
-  }
+  });
 });
 
 CommandRouter.post("/upload", fileup(), (req, res): any => {
@@ -68,7 +60,7 @@ CommandRouter.post("/upload", fileup(), (req, res): any => {
   if (files instanceof Array) {
     files.map((file) => {
       file.mv(
-        path.join(__dirname, "../Public/mcServer/mods", file.name),
+        path.join("C:/Users/Administrator/Desktop/mineserver/server.jar/mods/", file.name),
         (err: any) => {
           if (err) {
             return console.log(err)
@@ -79,7 +71,7 @@ CommandRouter.post("/upload", fileup(), (req, res): any => {
     });
   } else {
     files.mv(
-      path.join(__dirname, "../Public/mcServer/mods", files.name),
+      path.join("C:/Users/Administrator/Desktop/mineserver/server.jar/mods/", files.name),
       (err: any) => {
         if (err) {
           console.log(err)
