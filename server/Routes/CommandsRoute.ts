@@ -17,6 +17,15 @@ const runBat = () => {
   });
 };
 
+CommandRouter.get("/isserveron", (req, res): any => {
+  if (processMain !== null) {
+    return res.send({ msg: "El servidor ya esta en linea" });
+  }else {
+    return res.send({ msg: "El servidor no esta en linea "});
+  }
+
+});
+
 CommandRouter.get("/goonline", (req, res): any => {
   if (processMain !== null) {
     return res.send({ msg: "El servidor ya esta en linea" });
