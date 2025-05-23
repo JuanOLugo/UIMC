@@ -6,12 +6,14 @@ const CommandRouter = Router();
 
 let processMain: null | ChildProcessWithoutNullStreams = null;
 
-const dirExe = path.join(__dirname, "../public/mcServer/server.bat");
-
+const dirExe = path.join("C:/Users/Administrator/Desktop/UIMC-master/server/Public/server.bat");
+console.log(dirExe)
 const runBat = (dirExe: string) => {
-  return spawn("cmd", [dirExe], {
+  return spawn("cmd.exe", ['/c', 'start', dirExe], {
     shell: true,
-    stdio: ["pipe", "pipe", "pipe"],
+    detached:true,
+    cwd: path.dirname("C:/Users/Administrator/Desktop/UIMC-master/server/Public/server.jar"),
+  
   });
 };
 
@@ -22,7 +24,7 @@ CommandRouter.get("/goonline", (req, res): any => {
 
   try {
     processMain = runBat(dirExe);
-    res.send({ msg: "✅ Servidor iniciado" });
+    res.send({ msg: "✅ Servidor iniciado", msgdata: processMain });
   } catch (error) {
     res.send({ msg: "Error al iniciar el servidor" });
   }
